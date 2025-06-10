@@ -37,6 +37,23 @@ def get_args():
 
     return args
 
+def preprocess_image(image):
+    # Converter para YCrCb para equalizar brilho sem distorcer cor
+    ycrcb = cv.cvtColor(image, cv.COLOR_BGR2YCrCb)
+    y, cr, cb = cv.split(ycrcb)
+
+    # Equalização do canal de luminância
+    y_eq = cv.equalizeHist(y)
+
+    # Recombina os canais
+    ycrcb_eq = cv.merge((y_eq, cr, cb))
+    result = cv.cvtColor(ycrcb_eq, cv.COLOR_YCrCb2BGR)
+    return result
+
+def adjust_gamma(image, gamma=1.5):
+    invGamma = 1.0 / gamma
+    table = np.array([(i / 255.0) ** invGamma * 255 for i in np.arange(0, 256)]).astype("uint8")
+    return cv.LUT(image, table)
 
 def main():
     # Argument parsing #################################################################
@@ -112,6 +129,7 @@ def main():
         if not ret:
             break
         image = cv.flip(image, 1)  # Mirror display
+        image = preprocess_image(image)
         debug_image = copy.deepcopy(image)
 
         # Detection implementation #############################################################
